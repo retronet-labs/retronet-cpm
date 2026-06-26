@@ -5,6 +5,7 @@ go run ./cmd/retronet-cpm -conformance
 go run ./cmd/retronet-cpm -disk C:\tmp\cpm
 go run ./cmd/retronet-cpm -disk C:\tmp\cpm -run HELLO.COM
 go run ./cmd/retronet-cpm -run HELLO.COM -alu gate -trace
+go run ./cmd/retronet-cpm -disk C:\tmp\cpm -run WRITE.COM -write-disk
 ```
 
 Flag principali:
@@ -16,6 +17,7 @@ Flag principali:
 - `-input`: input testuale non interattivo.
 - `-trace`: trace leggibile.
 - `-trace-json`: trace JSON Lines.
+- `-write-disk`: abilita funzioni BDOS che modificano la directory host.
 - `-conformance`: suite sintetica.
 
 Variabile d'ambiente:

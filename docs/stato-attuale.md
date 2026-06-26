@@ -47,6 +47,16 @@ File read-only:
 - `20`: read sequential, record da 128 byte nel DMA
 - `26`: set DMA
 
+File mutanti controllati:
+
+- `19`: delete file
+- `21`: write sequential
+- `22`: make file
+- `23`: rename file
+
+Queste funzioni modificano il filesystem solo quando la CLI apre il drive con
+`-write-disk`.
+
 Le funzioni non implementate restituiscono errore esplicito. Il progetto non
 finge un BDOS completo.
 
@@ -77,9 +87,10 @@ git diff --check
 
 - Nessun BDOS/BIOS storico incluso.
 - Nessuna immagine disco storica.
-- Nessuna scrittura file BDOS.
+- Nessuna scrittura file BDOS senza opt-in esplicito `-write-disk`.
 - Nessun supporto user area.
 - Nessuna emulazione BIOS o periferiche S-100.
-- Gli esempi assembly usano ancora indirizzi runtime manuali per `0100h`.
+- Gli esempi assembly usano `.com`/`.orgbase` in `retronet-asm` per label
+  logiche a partire da `0100h`, senza indirizzi runtime manuali.
 
 La promessa attuale e' "CP/M-like didattico", non compatibilita' CP/M completa.

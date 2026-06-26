@@ -10,6 +10,7 @@ import (
 	"github.com/retronet-labs/retronet-8080/cpu"
 	"github.com/retronet-labs/retronet-cpm/bdos"
 	"github.com/retronet-labs/retronet-cpm/cpm"
+	"github.com/retronet-labs/retronet-cpm/disk"
 )
 
 func TestRunConformance(t *testing.T) {
@@ -46,6 +47,28 @@ func TestInvalidALUEnv(t *testing.T) {
 	code := run([]string{"-conformance"}, strings.NewReader(""), &out, &stderr)
 	if code != 2 || !strings.Contains(stderr.String(), "errore ALU") {
 		t.Fatalf("code=%d stderr=%s", code, stderr.String())
+	}
+}
+
+func TestWriteDiskFlagOpensMutableDrive(t *testing.T) {
+	root := t.TempDir()
+	drive, err := openDrive(runConfig{diskPath: root})
+	if err != nil {
+		t.Fatalf("open read-only: %v", err)
+	}
+	if _, ok := drive.(disk.MutableDrive); !ok {
+		t.Fatalf("HostDrive deve esporre MutableDrive anche quando read-only")
+	}
+	if err := drive.(disk.MutableDrive).WriteFile("NO.TXT", []byte("x")); err != disk.ErrReadOnly {
+		t.Fatalf("write without flag err=%v", err)
+	}
+
+	drive, err = openDrive(runConfig{diskPath: root, writeDisk: true})
+	if err != nil {
+		t.Fatalf("open writable: %v", err)
+	}
+	if err := drive.(disk.MutableDrive).WriteFile("YES.TXT", []byte("ok")); err != nil {
+		t.Fatalf("write with flag: %v", err)
 	}
 }
 

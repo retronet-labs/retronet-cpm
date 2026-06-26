@@ -15,7 +15,7 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 - ALU `gate` selezionabile per dimostrazioni didattiche.
 - Loader `.COM` a `0100h` e pagina zero con vettore BDOS `0005h`.
 - BDOS subset: console `0`, `1`, `2`, `6`, `9`, `10`, `11`, `12`; file
-  read-only `15`, `16`, `20`, `26`.
+  `15`, `16`, `19`, `20`, `21`, `22`, `23`, `26`.
 - Drive host `A:` read-only con nomi CP/M 8.3.
 - Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Documentazione pubblica in italiano.
@@ -47,6 +47,7 @@ A>EXIT
 - `-input <testo>`: input non interattivo per shell o programma.
 - `-trace`: trace testuale.
 - `-trace-json <file>`: trace JSON Lines.
+- `-write-disk`: abilita le funzioni BDOS mutanti sulla directory host.
 - `-conformance`: suite sintetica integrata.
 
 `RETRONET_CPM_ALU` puo' impostare il default della CLI. `RETRONET_8080_ALU`
@@ -69,5 +70,5 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 
 - Nessuna ROM o componente CP/M storico redistribuito.
 - BDOS subset, non BDOS completo.
-- Drive `A:` host read-only, non immagine disco storica.
+- Drive `A:` host read-only di default; scrittura solo con `-write-disk`.
 - Nessuna emulazione BIOS o periferiche S-100 reali.

@@ -63,3 +63,41 @@ func TestHostDriveListAndRead(t *testing.T) {
 		t.Fatalf("path traversal err=%v", err)
 	}
 }
+
+func TestHostDriveWriteRequiresExplicitWritableDrive(t *testing.T) {
+	root := t.TempDir()
+	drive, err := NewHostDrive(root)
+	if err != nil {
+		t.Fatalf("NewHostDrive: %v", err)
+	}
+	if err := drive.WriteFile("OUT.TXT", []byte("no")); !errors.Is(err, ErrReadOnly) {
+		t.Fatalf("read-only write err=%v", err)
+	}
+
+	writable, err := NewWritableHostDrive(root)
+	if err != nil {
+		t.Fatalf("NewWritableHostDrive: %v", err)
+	}
+	if err := writable.WriteFile("OUT.TXT", []byte("ok")); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	data, err := writable.ReadFile("out.txt")
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(data) != "ok" {
+		t.Fatalf("data=%q", data)
+	}
+	if err := writable.RenameFile("OUT.TXT", "NEW.TXT"); err != nil {
+		t.Fatalf("RenameFile: %v", err)
+	}
+	if _, err := writable.ReadFile("OUT.TXT"); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("old read err=%v", err)
+	}
+	if err := writable.DeleteFile("NEW.TXT"); err != nil {
+		t.Fatalf("DeleteFile: %v", err)
+	}
+	if _, err := writable.ReadFile("NEW.TXT"); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("deleted read err=%v", err)
+	}
+}

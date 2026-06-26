@@ -27,6 +27,7 @@ type runConfig struct {
 	traceJSON   string
 	input       string
 	aluName     string
+	writeDisk   bool
 	conformance bool
 }
 
@@ -63,7 +64,7 @@ func run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 	if cfg.conformance {
 		return runConformance(stdout)
 	}
-	drive, err := disk.NewHostDrive(cfg.diskPath)
+	drive, err := openDrive(cfg)
 	if err != nil {
 		fmt.Fprintf(stderr, "errore drive A: %v\n", err)
 		return 2
@@ -109,11 +110,19 @@ func parseFlags(args []string, stderr io.Writer) (runConfig, error) {
 	fs.StringVar(&cfg.traceJSON, "trace-json", "", "scrive trace JSON Lines nel file indicato")
 	fs.StringVar(&cfg.input, "input", "", "input testuale usato da programma o shell")
 	fs.StringVar(&cfg.aluName, "alu", cfg.aluName, "backend ALU: native o gate")
+	fs.BoolVar(&cfg.writeDisk, "write-disk", false, "abilita funzioni BDOS che modificano il drive host")
 	fs.BoolVar(&cfg.conformance, "conformance", false, "esegue la suite sintetica integrata")
 	if err := fs.Parse(args); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
+}
+
+func openDrive(cfg runConfig) (disk.Drive, error) {
+	if cfg.writeDisk {
+		return disk.NewWritableHostDrive(cfg.diskPath)
+	}
+	return disk.NewHostDrive(cfg.diskPath)
 }
 
 func defaultALUName() string {

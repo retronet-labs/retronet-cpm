@@ -9,10 +9,12 @@ import (
 )
 
 var ErrInvalidName = fmt.Errorf("nome CP/M 8.3 non valido")
+var ErrReadOnly = fmt.Errorf("drive host read-only")
 
 // HostDrive espone una directory host come drive A: read-only.
 type HostDrive struct {
-	root string
+	root     string
+	writable bool
 }
 
 func NewHostDrive(root string) (*HostDrive, error) {
@@ -31,6 +33,15 @@ func NewHostDrive(root string) (*HostDrive, error) {
 		return nil, fmt.Errorf("%s non e' una directory", abs)
 	}
 	return &HostDrive{root: abs}, nil
+}
+
+func NewWritableHostDrive(root string) (*HostDrive, error) {
+	drive, err := NewHostDrive(root)
+	if err != nil {
+		return nil, err
+	}
+	drive.writable = true
+	return drive, nil
 }
 
 func (d *HostDrive) Root() string { return d.root }
@@ -65,6 +76,43 @@ func (d *HostDrive) ReadFile(name string) ([]byte, error) {
 		return nil, err
 	}
 	return os.ReadFile(hostPath)
+}
+
+func (d *HostDrive) WriteFile(name string, data []byte) error {
+	if !d.writable {
+		return ErrReadOnly
+	}
+	normalized, err := NormalizeName(name)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(d.root, normalized), data, 0o600)
+}
+
+func (d *HostDrive) DeleteFile(name string) error {
+	if !d.writable {
+		return ErrReadOnly
+	}
+	hostPath, err := d.findHostPath(name)
+	if err != nil {
+		return err
+	}
+	return os.Remove(hostPath)
+}
+
+func (d *HostDrive) RenameFile(oldName string, newName string) error {
+	if !d.writable {
+		return ErrReadOnly
+	}
+	oldPath, err := d.findHostPath(oldName)
+	if err != nil {
+		return err
+	}
+	normalized, err := NormalizeName(newName)
+	if err != nil {
+		return err
+	}
+	return os.Rename(oldPath, filepath.Join(d.root, normalized))
 }
 
 func (d *HostDrive) findHostPath(name string) (string, error) {

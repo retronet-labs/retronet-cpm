@@ -153,6 +153,81 @@ func TestFCBOpenWithoutDisk(t *testing.T) {
 	}
 }
 
+func TestFCBWriteDeleteRenameRequiresMutableDrive(t *testing.T) {
+	mem := cpu.NewFlatMemory()
+	c := cpu.NewCPU8080()
+	fcbAddr := uint16(0x005C)
+	dmaAddr := uint16(0x0200)
+	writeFCB(mem, fcbAddr, "OUT", "TXT")
+	for i, value := range []byte("created$") {
+		mem.Write(dmaAddr+uint16(i), value)
+	}
+	handler := NewHandler(NewMemoryConsole(nil))
+	handler.Disk = fakeDrive{files: map[string][]byte{}}
+
+	c.SetDE(dmaAddr)
+	c.C = FunctionSetDMA
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("set dma: %v", err)
+	}
+	c.SetDE(fcbAddr)
+	c.C = FunctionMakeFile
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("make: %v", err)
+	}
+	if c.A != 0 {
+		t.Fatalf("make A=0x%02X", c.A)
+	}
+	c.C = FunctionWriteSequential
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if c.A != 0 {
+		t.Fatalf("write A=0x%02X", c.A)
+	}
+	c.C = FunctionCloseFile
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("close: %v", err)
+	}
+	data := handler.Disk.(fakeDrive).files["OUT.TXT"]
+	if string(data[:8]) != "created$" {
+		t.Fatalf("written=%q", data[:8])
+	}
+
+	writeRenameFCB(mem, fcbAddr, "NEW", "TXT")
+	c.C = FunctionRenameFile
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("rename: %v", err)
+	}
+	if _, ok := handler.Disk.(fakeDrive).files["NEW.TXT"]; !ok || c.A != 0 {
+		t.Fatalf("rename A=0x%02X files=%v", c.A, handler.Disk.(fakeDrive).files)
+	}
+	writeFCB(mem, fcbAddr, "NEW", "TXT")
+	c.C = FunctionDeleteFile
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, ok := handler.Disk.(fakeDrive).files["NEW.TXT"]; ok || c.A != 0 {
+		t.Fatalf("delete A=0x%02X files=%v", c.A, handler.Disk.(fakeDrive).files)
+	}
+}
+
+func TestFCBWriteFailsOnReadOnlyDrive(t *testing.T) {
+	mem := cpu.NewFlatMemory()
+	c := cpu.NewCPU8080()
+	writeFCB(mem, 0x005C, "OUT", "TXT")
+	handler := NewHandler(NewMemoryConsole(nil))
+	handler.Disk = readOnlyFakeDrive{}
+	c.SetDE(0x005C)
+	c.C = FunctionMakeFile
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("make read-only: %v", err)
+	}
+	if c.A != 0xFF {
+		t.Fatalf("read-only make A=0x%02X", c.A)
+	}
+}
+
 func writeFCB(mem cpu.Memory, addr uint16, name string, ext string) {
 	mem.Write(addr, 0)
 	for i := 0; i < 8; i++ {
@@ -168,6 +243,23 @@ func writeFCB(mem cpu.Memory, addr uint16, name string, ext string) {
 			value = ext[i]
 		}
 		mem.Write(addr+9+uint16(i), value)
+	}
+}
+
+func writeRenameFCB(mem cpu.Memory, addr uint16, name string, ext string) {
+	for i := 0; i < 8; i++ {
+		value := byte(' ')
+		if i < len(name) {
+			value = name[i]
+		}
+		mem.Write(addr+17+uint16(i), value)
+	}
+	for i := 0; i < 3; i++ {
+		value := byte(' ')
+		if i < len(ext) {
+			value = ext[i]
+		}
+		mem.Write(addr+25+uint16(i), value)
 	}
 }
 
@@ -190,3 +282,32 @@ func (d fakeDrive) ReadFile(name string) ([]byte, error) {
 	}
 	return append([]byte(nil), data...), nil
 }
+
+func (d fakeDrive) WriteFile(name string, data []byte) error {
+	d.files[name] = append([]byte(nil), data...)
+	return nil
+}
+
+func (d fakeDrive) DeleteFile(name string) error {
+	if _, ok := d.files[name]; !ok {
+		return errors.New("missing")
+	}
+	delete(d.files, name)
+	return nil
+}
+
+func (d fakeDrive) RenameFile(oldName string, newName string) error {
+	data, ok := d.files[oldName]
+	if !ok {
+		return errors.New("missing")
+	}
+	delete(d.files, oldName)
+	d.files[newName] = data
+	return nil
+}
+
+type readOnlyFakeDrive struct{}
+
+func (readOnlyFakeDrive) List() ([]disk.Entry, error) { return nil, nil }
+
+func (readOnlyFakeDrive) ReadFile(string) ([]byte, error) { return nil, errors.New("missing") }

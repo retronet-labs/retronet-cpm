@@ -24,7 +24,11 @@ const (
 	FunctionReturnVersion    byte   = 12
 	FunctionOpenFile         byte   = 15
 	FunctionCloseFile        byte   = 16
+	FunctionDeleteFile       byte   = 19
 	FunctionReadSequential   byte   = 20
+	FunctionWriteSequential  byte   = 21
+	FunctionMakeFile         byte   = 22
+	FunctionRenameFile       byte   = 23
 	FunctionSetDMA           byte   = 26
 	DefaultVersion           byte   = 0x22
 	DefaultDMA               uint16 = 0x0080
@@ -76,8 +80,9 @@ type Handler struct {
 }
 
 type openFile struct {
-	name string
-	data []byte
+	name  string
+	data  []byte
+	dirty bool
 }
 
 // NewHandler crea un handler BDOS. Se console e' nil viene usata una console
@@ -166,8 +171,16 @@ func (h *Handler) Call(c *cpu.CPU8080, mem cpu.Memory) (CallResult, error) {
 		return result, h.openFile(c, mem)
 	case FunctionCloseFile:
 		return result, h.closeFile(c)
+	case FunctionDeleteFile:
+		return result, h.deleteFile(c, mem)
 	case FunctionReadSequential:
 		return result, h.readSequential(c, mem)
+	case FunctionWriteSequential:
+		return result, h.writeSequential(c, mem)
+	case FunctionMakeFile:
+		return result, h.makeFile(c, mem)
+	case FunctionRenameFile:
+		return result, h.renameFile(c, mem)
 	case FunctionSetDMA:
 		h.DMA = c.DE()
 	default:
@@ -241,11 +254,37 @@ func (h *Handler) openFile(c *cpu.CPU8080, mem cpu.Memory) error {
 
 func (h *Handler) closeFile(c *cpu.CPU8080) error {
 	addr := c.DE()
-	if _, ok := h.openFiles[addr]; !ok {
+	file, ok := h.openFiles[addr]
+	if !ok {
 		setReturnByte(c, 0xFF)
 		return nil
 	}
+	if file.dirty {
+		if err := h.flush(file); err != nil {
+			setReturnByte(c, 0xFF)
+			return nil
+		}
+	}
 	delete(h.openFiles, addr)
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) deleteFile(c *cpu.CPU8080, mem cpu.Memory) error {
+	drive, ok := h.Disk.(disk.MutableDrive)
+	if !ok {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	name, err := fcbName(mem, c.DE())
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	if err := drive.DeleteFile(name); err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
 	setReturnByte(c, 0)
 	return nil
 }
@@ -275,9 +314,110 @@ func (h *Handler) readSequential(c *cpu.CPU8080, mem cpu.Memory) error {
 	return nil
 }
 
+func (h *Handler) writeSequential(c *cpu.CPU8080, mem cpu.Memory) error {
+	addr := c.DE()
+	file := h.openFiles[addr]
+	if file == nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	if _, ok := h.Disk.(disk.MutableDrive); !ok {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	record := int(mem.Read(addr + 32))
+	offset := record * RecordSize
+	need := offset + RecordSize
+	if len(file.data) < need {
+		grown := make([]byte, need)
+		copy(grown, file.data)
+		file.data = grown
+	}
+	for i := 0; i < RecordSize; i++ {
+		file.data[offset+i] = mem.Read(h.DMA + uint16(i))
+	}
+	mem.Write(addr+32, byte(record+1))
+	file.dirty = true
+	if err := h.flush(file); err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) makeFile(c *cpu.CPU8080, mem cpu.Memory) error {
+	drive, ok := h.Disk.(disk.MutableDrive)
+	if !ok {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	addr := c.DE()
+	name, err := fcbName(mem, addr)
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	file := &openFile{name: name, data: nil, dirty: true}
+	if err := drive.WriteFile(name, nil); err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	h.openFiles[addr] = file
+	mem.Write(addr+32, 0)
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) renameFile(c *cpu.CPU8080, mem cpu.Memory) error {
+	drive, ok := h.Disk.(disk.MutableDrive)
+	if !ok {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	addr := c.DE()
+	oldName, err := fcbName(mem, addr)
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	newName, err := fcbRenameName(mem, addr)
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	if err := drive.RenameFile(oldName, newName); err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) flush(file *openFile) error {
+	drive, ok := h.Disk.(disk.MutableDrive)
+	if !ok {
+		return disk.ErrReadOnly
+	}
+	if err := drive.WriteFile(file.name, file.data); err != nil {
+		return err
+	}
+	file.dirty = false
+	return nil
+}
+
 func fcbName(mem cpu.Memory, addr uint16) (string, error) {
 	name := fcbPart(mem, addr+1, 8)
 	ext := fcbPart(mem, addr+9, 3)
+	if ext != "" {
+		name += "." + ext
+	}
+	return disk.NormalizeName(name)
+}
+
+func fcbRenameName(mem cpu.Memory, addr uint16) (string, error) {
+	name := fcbPart(mem, addr+17, 8)
+	ext := fcbPart(mem, addr+25, 3)
 	if ext != "" {
 		name += "." + ext
 	}
