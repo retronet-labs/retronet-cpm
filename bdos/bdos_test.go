@@ -79,6 +79,36 @@ func TestConsoleFunctions(t *testing.T) {
 	}
 }
 
+func TestConsoleInputAtEOFReturnsCtrlZ(t *testing.T) {
+	mem := cpu.NewFlatMemory()
+	c := cpu.NewCPU8080()
+	handler := NewHandler(NewMemoryConsole(nil))
+
+	c.C = FunctionConsoleInput
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("console input EOF: %v", err)
+	}
+	if c.A != eofMarker || c.L != eofMarker {
+		t.Fatalf("EOF A=0x%02X L=0x%02X want 0x1A", c.A, c.L)
+	}
+}
+
+func TestReadConsoleLineAtEOFClosesLine(t *testing.T) {
+	mem := cpu.NewFlatMemory()
+	c := cpu.NewCPU8080()
+	handler := NewHandler(NewMemoryConsole([]byte("hi")))
+
+	c.C = FunctionReadConsoleLine
+	c.SetDE(0x0300)
+	mem.Write(0x0300, 8)
+	if _, err := handler.Call(c, mem); err != nil {
+		t.Fatalf("read line EOF: %v", err)
+	}
+	if mem.Read(0x0301) != 2 || mem.Read(0x0302) != 'h' || mem.Read(0x0303) != 'i' {
+		t.Fatalf("count=%d data=%q", mem.Read(0x0301), []byte{mem.Read(0x0302), mem.Read(0x0303)})
+	}
+}
+
 func TestUnsupportedFunction(t *testing.T) {
 	c := cpu.NewCPU8080()
 	c.C = 99

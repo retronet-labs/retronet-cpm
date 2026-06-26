@@ -34,6 +34,7 @@ const (
 	DefaultDMA               uint16 = 0x0080
 	RecordSize               int    = 128
 	directConsoleInputMarker byte   = 0xFF
+	eofMarker                byte   = 0x1A
 )
 
 var (
@@ -123,6 +124,13 @@ func (h *Handler) Call(c *cpu.CPU8080, mem cpu.Memory) (CallResult, error) {
 	case FunctionConsoleInput:
 		value, err := h.Console.ReadByte()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// Fine input: restituiamo Ctrl-Z (convenzione CP/M) invece di
+				// abortire il programma con un errore.
+				c.A = eofMarker
+				c.L = eofMarker
+				return result, nil
+			}
 			return result, err
 		}
 		c.A = value
@@ -213,6 +221,10 @@ func (h *Handler) readConsoleLine(c *cpu.CPU8080, mem cpu.Memory) error {
 	for count < max {
 		value, err := h.Console.ReadByte()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// Fine input: chiudiamo la riga con quanto letto finora.
+				break
+			}
 			return err
 		}
 		if value == '\n' {
@@ -338,10 +350,7 @@ func (h *Handler) writeSequential(c *cpu.CPU8080, mem cpu.Memory) error {
 	}
 	mem.Write(addr+32, byte(record+1))
 	file.dirty = true
-	if err := h.flush(file); err != nil {
-		setReturnByte(c, 0xFF)
-		return nil
-	}
+	// I record restano bufferizzati e vengono scritti su disco da closeFile.
 	setReturnByte(c, 0)
 	return nil
 }
@@ -436,8 +445,12 @@ func fcbPart(mem cpu.Memory, addr uint16, size int) string {
 	return b.String()
 }
 
+// setReturnByte replica la convenzione di ritorno del BDOS CP/M 2.2: il codice
+// finisce sia in A sia in L, con H e B azzerati (A==L, B==H).
 func setReturnByte(c *cpu.CPU8080, value byte) {
 	c.A = value
+	c.B = 0
+	c.H = 0
 	c.L = value
 }
 
