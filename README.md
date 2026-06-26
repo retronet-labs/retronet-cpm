@@ -53,7 +53,19 @@ A>EXIT
 resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 8080, non al runtime CP/M-like.
 
-## Limiti v0.1
+## Documentazione
+
+- [Stato attuale](docs/stato-attuale.md): cosa e' stato implementato finora e
+  quali repo sono coinvolti.
+- [Guida d'uso](docs/guida-uso.md): comandi pratici per conformance, shell,
+  programmi `.COM`, esempi assembly e trace.
+- [Architettura](docs/architettura.md): macchina CP/M-like, pagina zero, BDOS e
+  scelta ALU.
+- [BDOS](docs/bdos.md): funzioni console e file read-only supportate.
+- [Shell](docs/shell.md): comandi `A>`.
+- [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
+
+## Limiti attuali
 
 - Nessuna ROM o componente CP/M storico redistribuito.
 - BDOS subset, non BDOS completo.
