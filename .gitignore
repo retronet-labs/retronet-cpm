@@ -1,0 +1,6 @@
+.gocache/
+*.com
+*.COM
+*.rom
+*.bin
+trace.jsonl
