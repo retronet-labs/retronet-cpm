@@ -14,7 +14,8 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 - Default operativo: ALU `native`, piu' veloce per programmi CP/M-like lunghi.
 - ALU `gate` selezionabile per dimostrazioni didattiche.
 - Loader `.COM` a `0100h` e pagina zero con vettore BDOS `0005h`.
-- BDOS console subset: funzioni `0`, `1`, `2`, `6`, `9`, `10`, `11`, `12`.
+- BDOS subset: console `0`, `1`, `2`, `6`, `9`, `10`, `11`, `12`; file
+  read-only `15`, `16`, `20`, `26`.
 - Drive host `A:` read-only con nomi CP/M 8.3.
 - Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Documentazione pubblica in italiano.
@@ -55,6 +56,6 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 ## Limiti v0.1
 
 - Nessuna ROM o componente CP/M storico redistribuito.
-- BDOS console subset, non BDOS completo.
+- BDOS subset, non BDOS completo.
 - Drive `A:` host read-only, non immagine disco storica.
 - Nessuna emulazione BIOS o periferiche S-100 reali.

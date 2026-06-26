@@ -9,9 +9,14 @@
 - shell `A>` minimale
 - CLI e conformance sintetica
 
+## v0.2
+
+- funzioni BDOS file read-only: open, close, read sequential, set DMA
+- esempi didattici: echo, mini menu, TYPE-like su file `$`-terminated
+- test end-to-end assembler `i8080` -> `.COM` -> `retronet-cpm`
+
 ## Dopo v0.1
 
-- funzioni BDOS file/FCB documentate
 - immagini disco con provenienza chiara
 - profili BIOS didattici
-- esempi assemblati con `retronet-asm`
+- origin logico `.COM` in `retronet-asm`, per evitare indirizzi manuali `0100h`
