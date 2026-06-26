@@ -8,11 +8,15 @@ ROM originali. Offre invece una macchina compatibile con le convenzioni minime
 utili per esempi, diagnostiche e programmi console: caricamento a `0100h`,
 trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 
-## Stato iniziale
+## Stato
 
 - CPU 8080 importata da `github.com/retronet-labs/retronet-8080`.
 - Default operativo: ALU `native`, piu' veloce per programmi CP/M-like lunghi.
 - ALU `gate` selezionabile per dimostrazioni didattiche.
+- Loader `.COM` a `0100h` e pagina zero con vettore BDOS `0005h`.
+- BDOS console subset: funzioni `0`, `1`, `2`, `6`, `9`, `10`, `11`, `12`.
+- Drive host `A:` read-only con nomi CP/M 8.3.
+- Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Documentazione pubblica in italiano.
 
 ## Quick start
@@ -20,9 +24,33 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 ```powershell
 go test ./...
 go run ./cmd/retronet-cpm -conformance
-go run ./cmd/retronet-cpm -disk . 
+go run ./cmd/retronet-cpm -disk .
 go run ./cmd/retronet-cpm -run HELLO.COM
 ```
+
+La shell parte se non passi `-run`:
+
+```text
+A>DIR
+A>TYPE README.TXT
+A>RUN HELLO
+A>EXIT
+```
+
+## CLI
+
+- `-disk <dir>`: directory host mappata come drive `A:`.
+- `-run <file>`: esegue un `.COM` e termina.
+- `-steps <n>`: limite di istruzioni 8080.
+- `-alu native|gate`: backend ALU; default `native`.
+- `-input <testo>`: input non interattivo per shell o programma.
+- `-trace`: trace testuale.
+- `-trace-json <file>`: trace JSON Lines.
+- `-conformance`: suite sintetica integrata.
+
+`RETRONET_CPM_ALU` puo' impostare il default della CLI. `RETRONET_8080_ALU`
+resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
+8080, non al runtime CP/M-like.
 
 ## Limiti v0.1
 
