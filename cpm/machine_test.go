@@ -6,6 +6,7 @@ import (
 
 	"github.com/retronet-labs/retronet-8080/cpu"
 	"github.com/retronet-labs/retronet-cpm/bdos"
+	"github.com/retronet-labs/retronet-cpm/disk"
 )
 
 func TestDefaultALUIsNativeAndResetPreservesIt(t *testing.T) {
@@ -85,4 +86,74 @@ func TestProgramTooLarge(t *testing.T) {
 	if !errors.Is(err, ErrProgramTooLarge) {
 		t.Fatalf("err=%v", err)
 	}
+}
+
+func TestCOMReadsFCBFileThroughBDOS(t *testing.T) {
+	console := bdos.NewMemoryConsole(nil)
+	m, err := NewMachine(Config{
+		Console: console,
+		Disk:    fakeDisk{files: map[string][]byte{"MSG.TXT": []byte("OK$")}},
+	})
+	if err != nil {
+		t.Fatalf("NewMachine: %v", err)
+	}
+	if err := m.LoadCOM("READ.COM", fcbReadProgram()); err != nil {
+		t.Fatalf("LoadCOM: %v", err)
+	}
+	result, err := m.Run(100)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if result.Reason != RunStoppedBDOSTerminate || console.Output() != "OK" {
+		t.Fatalf("result=%+v output=%q", result, console.Output())
+	}
+}
+
+func fcbReadProgram() []byte {
+	const dmaAddr = 0x0200
+	program := []byte{
+		cpu.LXI(cpu.PairDE), 0x00, 0x00,
+		cpu.MVI(cpu.RegC), bdos.FunctionOpenFile,
+		cpu.CALL(), byte(BDOSVector), byte(BDOSVector >> 8),
+		cpu.LXI(cpu.PairDE), byte(dmaAddr & 0x00FF), byte(dmaAddr >> 8),
+		cpu.MVI(cpu.RegC), bdos.FunctionSetDMA,
+		cpu.CALL(), byte(BDOSVector), byte(BDOSVector >> 8),
+		cpu.LXI(cpu.PairDE), 0x00, 0x00,
+		cpu.MVI(cpu.RegC), bdos.FunctionReadSequential,
+		cpu.CALL(), byte(BDOSVector), byte(BDOSVector >> 8),
+		cpu.LXI(cpu.PairDE), byte(dmaAddr & 0x00FF), byte(dmaAddr >> 8),
+		cpu.MVI(cpu.RegC), bdos.FunctionPrintString,
+		cpu.CALL(), byte(BDOSVector), byte(BDOSVector >> 8),
+		cpu.MVI(cpu.RegC), bdos.FunctionTerminate,
+		cpu.CALL(), byte(BDOSVector), byte(BDOSVector >> 8),
+	}
+	fcbAddr := TransientBase + uint16(len(program))
+	program[1] = byte(fcbAddr)
+	program[2] = byte(fcbAddr >> 8)
+	program[17] = byte(fcbAddr)
+	program[18] = byte(fcbAddr >> 8)
+	fcb := make([]byte, 33)
+	copy(fcb[1:9], []byte("MSG     "))
+	copy(fcb[9:12], []byte("TXT"))
+	return append(program, fcb...)
+}
+
+type fakeDisk struct {
+	files map[string][]byte
+}
+
+func (d fakeDisk) List() ([]disk.Entry, error) {
+	entries := make([]disk.Entry, 0, len(d.files))
+	for name, data := range d.files {
+		entries = append(entries, disk.Entry{Name: name, Size: int64(len(data))})
+	}
+	return entries, nil
+}
+
+func (d fakeDisk) ReadFile(name string) ([]byte, error) {
+	data, ok := d.files[name]
+	if !ok {
+		return nil, errors.New("missing")
+	}
+	return append([]byte(nil), data...), nil
 }

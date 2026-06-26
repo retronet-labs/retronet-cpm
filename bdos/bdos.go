@@ -10,25 +10,33 @@ import (
 	"sync"
 
 	"github.com/retronet-labs/retronet-8080/cpu"
+	"github.com/retronet-labs/retronet-cpm/disk"
 )
 
 const (
-	FunctionTerminate        byte = 0
-	FunctionConsoleInput     byte = 1
-	FunctionConsoleOutput    byte = 2
-	FunctionDirectConsoleIO  byte = 6
-	FunctionPrintString      byte = 9
-	FunctionReadConsoleLine  byte = 10
-	FunctionConsoleStatus    byte = 11
-	FunctionReturnVersion    byte = 12
-	DefaultVersion           byte = 0x22
-	directConsoleInputMarker byte = 0xFF
+	FunctionTerminate        byte   = 0
+	FunctionConsoleInput     byte   = 1
+	FunctionConsoleOutput    byte   = 2
+	FunctionDirectConsoleIO  byte   = 6
+	FunctionPrintString      byte   = 9
+	FunctionReadConsoleLine  byte   = 10
+	FunctionConsoleStatus    byte   = 11
+	FunctionReturnVersion    byte   = 12
+	FunctionOpenFile         byte   = 15
+	FunctionCloseFile        byte   = 16
+	FunctionReadSequential   byte   = 20
+	FunctionSetDMA           byte   = 26
+	DefaultVersion           byte   = 0x22
+	DefaultDMA               uint16 = 0x0080
+	RecordSize               int    = 128
+	directConsoleInputMarker byte   = 0xFF
 )
 
 var (
 	ErrNilCPU              = errors.New("cpu 8080 non inizializzata")
 	ErrNilMemory           = errors.New("memoria BDOS non inizializzata")
 	ErrNilConsole          = errors.New("console BDOS non inizializzata")
+	ErrNilDisk             = errors.New("drive BDOS non inizializzato")
 	ErrUnsupportedFunction = errors.New("funzione BDOS non supportata")
 	ErrUnterminatedString  = errors.New("stringa BDOS non terminata")
 )
@@ -60,7 +68,16 @@ func (e *UnsupportedFunctionError) Unwrap() error { return ErrUnsupportedFunctio
 // Handler esegue le funzioni BDOS sullo stato CPU/memoria passato dal core CP/M.
 type Handler struct {
 	Console Console
+	Disk    disk.Drive
 	Version byte
+	DMA     uint16
+
+	openFiles map[uint16]*openFile
+}
+
+type openFile struct {
+	name string
+	data []byte
 }
 
 // NewHandler crea un handler BDOS. Se console e' nil viene usata una console
@@ -69,7 +86,18 @@ func NewHandler(console Console) *Handler {
 	if console == nil {
 		console = NewMemoryConsole(nil)
 	}
-	return &Handler{Console: console, Version: DefaultVersion}
+	h := &Handler{Console: console, Version: DefaultVersion}
+	h.Reset()
+	return h
+}
+
+// Reset ripristina lo stato volatile BDOS: DMA e file aperti.
+func (h *Handler) Reset() {
+	if h == nil {
+		return
+	}
+	h.DMA = DefaultDMA
+	h.openFiles = make(map[uint16]*openFile)
 }
 
 // Call esegue la funzione indicata dal registro C.
@@ -134,6 +162,14 @@ func (h *Handler) Call(c *cpu.CPU8080, mem cpu.Memory) (CallResult, error) {
 		c.A = version
 		c.H = 0
 		c.L = version
+	case FunctionOpenFile:
+		return result, h.openFile(c, mem)
+	case FunctionCloseFile:
+		return result, h.closeFile(c)
+	case FunctionReadSequential:
+		return result, h.readSequential(c, mem)
+	case FunctionSetDMA:
+		h.DMA = c.DE()
 	default:
 		return result, &UnsupportedFunctionError{Function: c.C}
 	}
@@ -180,6 +216,89 @@ func (h *Handler) readConsoleLine(c *cpu.CPU8080, mem cpu.Memory) error {
 	}
 	mem.Write(countAddr, count)
 	return nil
+}
+
+func (h *Handler) openFile(c *cpu.CPU8080, mem cpu.Memory) error {
+	if h.Disk == nil {
+		return ErrNilDisk
+	}
+	addr := c.DE()
+	name, err := fcbName(mem, addr)
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	data, err := h.Disk.ReadFile(name)
+	if err != nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	h.openFiles[addr] = &openFile{name: name, data: data}
+	mem.Write(addr+32, 0)
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) closeFile(c *cpu.CPU8080) error {
+	addr := c.DE()
+	if _, ok := h.openFiles[addr]; !ok {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	delete(h.openFiles, addr)
+	setReturnByte(c, 0)
+	return nil
+}
+
+func (h *Handler) readSequential(c *cpu.CPU8080, mem cpu.Memory) error {
+	addr := c.DE()
+	file := h.openFiles[addr]
+	if file == nil {
+		setReturnByte(c, 0xFF)
+		return nil
+	}
+	record := int(mem.Read(addr + 32))
+	offset := record * RecordSize
+	if offset >= len(file.data) {
+		setReturnByte(c, 1)
+		return nil
+	}
+	for i := 0; i < RecordSize; i++ {
+		value := byte(0x1A)
+		if offset+i < len(file.data) {
+			value = file.data[offset+i]
+		}
+		mem.Write(h.DMA+uint16(i), value)
+	}
+	mem.Write(addr+32, byte(record+1))
+	setReturnByte(c, 0)
+	return nil
+}
+
+func fcbName(mem cpu.Memory, addr uint16) (string, error) {
+	name := fcbPart(mem, addr+1, 8)
+	ext := fcbPart(mem, addr+9, 3)
+	if ext != "" {
+		name += "." + ext
+	}
+	return disk.NormalizeName(name)
+}
+
+func fcbPart(mem cpu.Memory, addr uint16, size int) string {
+	var b strings.Builder
+	for i := 0; i < size; i++ {
+		value := mem.Read(addr+uint16(i)) & 0x7F
+		if value == ' ' || value == 0 {
+			continue
+		}
+		b.WriteByte(value)
+	}
+	return b.String()
+}
+
+func setReturnByte(c *cpu.CPU8080, value byte) {
+	c.A = value
+	c.L = value
 }
 
 // MemoryConsole e' una console in memoria utile per test, conformance e CLI non

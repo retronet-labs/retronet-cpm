@@ -103,6 +103,7 @@ func NewMachine(config Config) (*Machine, error) {
 		alu:    alu,
 		bdos:   bdos.NewHandler(console),
 	}
+	m.bdos.Disk = config.Disk
 	m.ResetProgram()
 	return m, nil
 }
@@ -114,6 +115,10 @@ func (m *Machine) ResetProgram() {
 	m.CPU.Reset()
 	m.CPU.PC = TransientBase
 	m.CPU.SP = DefaultStack
+	if m.bdos != nil {
+		m.bdos.Reset()
+		m.bdos.Disk = m.config.Disk
+	}
 	m.installPageZero()
 	m.traceSequence = 0
 	m.loadedName = ""
