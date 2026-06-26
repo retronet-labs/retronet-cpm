@@ -4,11 +4,9 @@ Questo e' il piano tecnico consigliato dopo `retronet-cpm v0.2.0`.
 
 ## 1. Origin Logico .COM In `retronet-asm`
 
-Problema attuale: gli esempi `.COM` devono usare indirizzi assoluti calcolati per
-runtime `0100h`, ma l'assembler calcola le label da `0`.
+Stato: implementato con `.orgbase <addr>` e alias `.com`.
 
-Obiettivo: aggiungere una direttiva che cambi la base logica delle label senza
-emettere padding nel file.
+La direttiva cambia la base logica delle label senza emettere padding nel file.
 
 Possibili forme:
 
@@ -24,26 +22,26 @@ oppure:
 .com
 ```
 
-Criteri di successo:
+Risultato:
 
 - `label:` nel sorgente vale `0100h + offset`.
 - il file `.COM` emesso inizia dal primo byte reale, senza 256 byte iniziali.
-- gli esempi CP/M non hanno piu' indirizzi manuali nei commenti.
+- gli esempi CP/M usano label al posto di indirizzi manuali.
 - test end-to-end assembler -> CP/M aggiornato.
 
 ## 2. BDOS File In Scrittura
 
-Estendere il subset file oltre la lettura:
+Stato: implementato con opt-in `-write-disk`.
 
 - `22`: make file
 - `21`: write sequential
 - `19`: delete file
 - `23`: rename file
 
-Policy iniziale consigliata:
+Policy attuale:
 
 - default ancora read-only per sicurezza.
-- flag CLI futuro `-write-disk` per abilitare scrittura host.
+- flag CLI `-write-disk` per abilitare scrittura host.
 - test con directory temporanee, mai su path reali dell'utente.
 
 Criteri di successo:
@@ -54,7 +52,8 @@ Criteri di successo:
 
 ## 3. Libreria Assembly CP/M-like
 
-Creare esempi o include documentali con costanti comuni:
+Stato: aggiunto `examples/lib/cpm-bdos.asm` come blocco copiabile con costanti
+comuni:
 
 ```asm
 BDOS  = 0x0005

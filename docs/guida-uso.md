@@ -119,6 +119,18 @@ go run ./cmd/retronet-cpm -run HELLO.COM -trace-json trace.jsonl
 
 Il trace include istruzioni 8080 e chiamate BDOS.
 
+## Scrivere Sul Drive Host
+
+Per sicurezza il drive `A:` e' read-only. I programmi che usano BDOS `make`,
+`write sequential`, `delete` o `rename` falliscono con `A=FFh` se non abiliti la
+scrittura:
+
+```powershell
+go run ./cmd/retronet-cpm -disk C:\tmp\cpm -run WRITE.COM -write-disk
+```
+
+Usa `-write-disk` solo su directory temporanee o preparate apposta.
+
 ## Assemblare Gli Esempi
 
 Con `retronet-asm` come repo sibling:
