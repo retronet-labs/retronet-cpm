@@ -15,8 +15,16 @@
 - esempi didattici: echo, mini menu, TYPE-like su file `$`-terminated
 - test end-to-end assembler `i8080` -> `.COM` -> `retronet-cpm`
 
-## Dopo v0.1
+## v0.3
 
-- immagini disco con provenienza chiara
-- profili BIOS didattici
-- origin logico `.COM` in `retronet-asm`, per evitare indirizzi manuali `0100h`
+- origine logica `.COM` via `.com`/`.orgbase` in `retronet-asm`
+- BDOS write opt-in con `-write-disk`
+- libreria assembly didattica `examples/lib/cpm-bdos.asm`
+
+## Dopo v0.3
+
+- `retronet-terminal` come console condivisa
+- `.include` negli esempi assembly
+- command tail e FCB default sintetici
+- immagini disco solo con provenienza e licenza chiare
+- profili BIOS didattici, non storici inventati

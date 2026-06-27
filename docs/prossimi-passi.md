@@ -62,8 +62,11 @@ TERM  = 0
 DMA   = 0x0080
 ```
 
-Finche' `retronet-asm` non supporta include/macro, la libreria puo' vivere come
-documentazione copiabile in `examples/README.md` o in `examples/lib/`.
+`retronet-asm` supporta `.include`, quindi gli esempi possono includere il file:
+
+```asm
+.include "lib/cpm-bdos.asm"
+```
 
 Criteri di successo:
 
@@ -73,11 +76,14 @@ Criteri di successo:
 
 ## 4. `retronet-terminal`
 
-Separare il terminale dal runtime CP/M:
+Stato: implementato come repo separato `retronet-terminal` e integrato nella CLI
+`-run` tramite adattatore BDOS.
+
+Responsabilita' separate dal runtime CP/M:
 
 - buffer output
 - input queue
-- modalita' raw/testuale
+- schermo testuale derivato
 - adattatore CLI
 - futuro adattatore websocket
 
@@ -86,9 +92,9 @@ dello stesso concetto di terminale.
 
 Criteri di successo:
 
-- `retronet-cpm` puo' usare `retronet-terminal` come console.
-- test di input/output indipendenti dalle CPU.
-- API pronta per websocket.
+- `retronet-cpm` usa `retronet-terminal` come console per `-run`.
+- test di input/output indipendenti dalle CPU nel repo terminale.
+- API byte-oriented pronta per un futuro websocket.
 
 ## 5. Demo Unica Documentata
 
@@ -118,10 +124,13 @@ Criteri di successo:
 
 ## 6. Compatibilita' CP/M Incrementale
 
-Dopo i passi sopra:
+Stato: primo incremento implementato in forma sintetica e documentata.
 
-- supportare command tail a `0080h`.
-- inizializzare FCB default a `005Ch` e `006Ch` dalla shell `RUN`.
+- command tail a `0080h`.
+- FCB default a `005Ch` e `006Ch` dalla shell `RUN`.
+
+Restano aperti:
+
 - aggiungere funzioni BDOS comuni usate da programmi piccoli.
 - valutare diagnostiche CP/M reali solo se licenza/provenienza sono gestite
   fuori dal repo.

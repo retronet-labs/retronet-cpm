@@ -23,6 +23,8 @@ al resto dell'ecosistema RetroNet.
 - ALU: default `cpu.Native`, piu' veloce per programmi lunghi; `cpu.Gate`
   resta selezionabile con `-alu gate`.
 - Stack iniziale: `EFFEh`.
+- Command tail: `0080h`, inizializzata da `RUN <programma> [argomenti]`.
+- FCB default: `005Ch` e `006Ch` dai primi due argomenti 8.3 della shell.
 - Drive `A:`: directory host read-only con nomi CP/M 8.3.
 - Shell `A>`: `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Trace: testuale con `-trace`, JSON Lines con `-trace-json`.
@@ -70,6 +72,7 @@ La suite locale copre:
 - FCB read-only e DMA
 - drive host 8.3 e blocco path traversal
 - shell `DIR`, `TYPE`, `RUN`, `EXIT`
+- command tail e FCB default sintetici
 - CLI e `RETRONET_CPM_ALU`
 - conformance sintetica
 - test end-to-end locale `retronet-asm -> .COM -> retronet-cpm`
@@ -89,6 +92,7 @@ git diff --check
 - Nessuna immagine disco storica.
 - Nessuna scrittura file BDOS senza opt-in esplicito `-write-disk`.
 - Nessun supporto user area.
+- Nessun parsing completo di wildcard o opzioni CCP storiche.
 - Nessuna emulazione BIOS o periferiche S-100.
 - Gli esempi assembly usano `.com`/`.orgbase` in `retronet-asm` per label
   logiche a partire da `0100h`, senza indirizzi runtime manuali.

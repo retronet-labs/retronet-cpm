@@ -66,6 +66,15 @@ Se il nome non ha estensione e non e' un path, la CLI prova `.COM`:
 go run ./cmd/retronet-cpm -disk C:\tmp\cpm -run HELLO
 ```
 
+Nella shell puoi passare argomenti al programma:
+
+```text
+A>RUN TYPE DOLLAR.TXT
+```
+
+La macchina scrive la command tail a `0080h` e prepara gli FCB default a `005Ch`
+e `006Ch` dai primi due argomenti 8.3.
+
 ## Scegliere L'ALU
 
 Default:

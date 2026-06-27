@@ -18,6 +18,8 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
   `15`, `16`, `19`, `20`, `21`, `22`, `23`, `26`.
 - Drive host `A:` read-only con nomi CP/M 8.3.
 - Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
+- Console `.COM` adattata a `retronet-terminal` per input/output condivisi con
+  futuri websocket.
 - Documentazione pubblica in italiano.
 
 ## Quick start
@@ -64,6 +66,7 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
   scelta ALU.
 - [BDOS](docs/bdos.md): funzioni console e file read-only supportate.
 - [Shell](docs/shell.md): comandi `A>`.
+- [Demo ripetibile](docs/demo.md): transcript locale senza ROM o dischi storici.
 - [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
 - [Release v0.3.0](docs/release-v0.3.0.md): origine `.COM`, BDOS write opt-in
   e libreria assembly didattica.
