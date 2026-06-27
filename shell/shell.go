@@ -11,6 +11,7 @@ import (
 	"github.com/retronet-labs/retronet-cpm/bdos"
 	"github.com/retronet-labs/retronet-cpm/cpm"
 	"github.com/retronet-labs/retronet-cpm/disk"
+	rt "github.com/retronet-labs/retronet-terminal"
 )
 
 var ErrExit = errors.New("uscita dalla shell")
@@ -22,6 +23,7 @@ type Config struct {
 	ALU       cpu.ALUBackend
 	StepLimit uint64
 	Trace     cpm.TraceSink
+	Terminal  *rt.Terminal
 }
 
 type Shell struct {
@@ -29,6 +31,7 @@ type Shell struct {
 	reader    *bufio.Reader
 	output    io.Writer
 	console   *bdos.TerminalConsole
+	terminal  *rt.Terminal
 	alu       cpu.ALUBackend
 	stepLimit uint64
 	trace     cpm.TraceSink
@@ -46,6 +49,10 @@ func New(config Config) (*Shell, error) {
 	if output == nil {
 		output = io.Discard
 	}
+	term := config.Terminal
+	if term == nil {
+		term = rt.New(rt.Config{ANSI: true})
+	}
 	alu := config.ALU
 	if alu == nil {
 		alu = cpu.Native
@@ -55,16 +62,23 @@ func New(config Config) (*Shell, error) {
 		stepLimit = cpm.DefaultStepLimit
 	}
 	reader := bufio.NewReader(input)
+	mirror := output
+	if outputTerminal, ok := output.(*rt.Terminal); ok && outputTerminal == term {
+		mirror = io.Discard
+	}
 	return &Shell{
 		drive:     config.Drive,
 		reader:    reader,
 		output:    output,
-		console:   bdos.NewTerminalConsole(nil, reader, output),
+		console:   bdos.NewTerminalConsole(term, reader, mirror),
+		terminal:  term,
 		alu:       alu,
 		stepLimit: stepLimit,
 		trace:     config.Trace,
 	}, nil
 }
+
+func (s *Shell) Terminal() *rt.Terminal { return s.terminal }
 
 func (s *Shell) Run() error {
 	for {
