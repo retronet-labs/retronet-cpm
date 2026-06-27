@@ -149,7 +149,7 @@ func runProgram(cfg runConfig, drive disk.Drive, alu cpu.ALUBackend, trace cpm.T
 		fmt.Fprintf(stderr, "errore caricamento programma: %v\n", err)
 		return 1
 	}
-	console := bdos.NewStreamConsole(input, stdout)
+	console := bdos.NewTerminalConsole(nil, input, stdout)
 	m, err := cpm.NewMachine(cpm.Config{
 		ALU:       alu,
 		StepLimit: cfg.steps,
