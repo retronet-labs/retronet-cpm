@@ -1,32 +1,24 @@
 .arch i8080
+.include "lib/cpm-bdos.asm"
 .com
 
-; TYPE-like minimale: apre DOLLAR.TXT dal drive A:, legge un record nel DMA
-; 0200h e lo stampa come stringa BDOS 9. Il file deve contenere un '$' nel primo
-; record, per esempio: CIAO DA A:$.
+; TYPE-like minimale: usa l'FCB default a 005Ch inizializzato dalla shell
+; con RUN TYPE DOLLAR.TXT, legge un record nel DMA 0200h e lo stampa come
+; stringa BDOS 9. Il file deve contenere un '$' nel primo record.
 
-.equ BDOS 0x0005
 .equ DMA 0x0200
 
-        LXI D, fcb
-        MVI C, 15
+        LXI D, DEFAULT_FCB1
+        MVI C, BDOS_OPEN
         CALL BDOS
         LXI D, DMA
-        MVI C, 26
+        MVI C, BDOS_SETDMA
         CALL BDOS
-        LXI D, fcb
-        MVI C, 20
+        LXI D, DEFAULT_FCB1
+        MVI C, BDOS_READSEQ
         CALL BDOS
         LXI D, DMA
-        MVI C, 9
+        MVI C, BDOS_PRINT
         CALL BDOS
-        MVI C, 0
+        MVI C, BDOS_TERM
         CALL BDOS
-
-fcb:    .byte 0x00
-        .byte 0x44, 0x4F, 0x4C, 0x4C, 0x41, 0x52, 0x20, 0x20
-        .byte 0x54, 0x58, 0x54
-        .byte 0x00, 0x00, 0x00, 0x00
-        .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        .byte 0x00

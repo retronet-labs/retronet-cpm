@@ -1,15 +1,9 @@
 .arch i8080
+.include "lib/cpm-bdos.asm"
 .com
 
 ; Crea OUT.TXT e scrive un record sequenziale dal buffer "SAVED$".
 ; Richiede retronet-cpm -write-disk.
-
-.equ BDOS 0x0005
-.equ BDOS_TERM 0
-.equ BDOS_MAKE 22
-.equ BDOS_WRITESEQ 21
-.equ BDOS_CLOSE 16
-.equ BDOS_SETDMA 26
 
         LXI D, fcb
         MVI C, BDOS_MAKE

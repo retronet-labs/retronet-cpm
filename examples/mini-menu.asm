@@ -1,4 +1,5 @@
 .arch i8080
+.include "lib/cpm-bdos.asm"
 .com
 
 ; Mini menu CP/M-like. Legge un tasto con BDOS 1:
@@ -6,12 +7,10 @@
 ;   2 -> stampa BYE
 ;   altro -> stampa ?
 
-.equ BDOS 0x0005
-
         LXI D, menu
-        MVI C, 9
+        MVI C, BDOS_PRINT
         CALL BDOS
-        MVI C, 1
+        MVI C, BDOS_CONIN
         CALL BDOS
         CPI 0x31
         JZ one
@@ -23,9 +22,9 @@ one:    LXI D, msg1
         JMP print
 two:    LXI D, msg2
         JMP print
-print:  MVI C, 9
+print:  MVI C, BDOS_PRINT
         CALL BDOS
-        MVI C, 0
+        MVI C, BDOS_TERM
         CALL BDOS
 
 menu:   .byte 0x31, 0x29, 0x20, 0x48, 0x45, 0x4C, 0x4C, 0x4F
