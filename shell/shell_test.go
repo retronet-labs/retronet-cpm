@@ -45,6 +45,33 @@ func TestShellCommands(t *testing.T) {
 	}
 }
 
+func TestShellProgramInputKeepsFollowingCommands(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "ECHO.COM"), echoInputProgram(), 0o600); err != nil {
+		t.Fatalf("write com: %v", err)
+	}
+	drive, err := disk.NewHostDrive(root)
+	if err != nil {
+		t.Fatalf("drive: %v", err)
+	}
+	var out bytes.Buffer
+	sh, err := New(Config{
+		Drive:  drive,
+		Input:  strings.NewReader("RUN ECHO\nZEXIT\n"),
+		Output: &out,
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := sh.Run(); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	text := out.String()
+	if !strings.Contains(text, "Z") || strings.Contains(text, "comando sconosciuto") {
+		t.Fatalf("output:\n%s", text)
+	}
+}
+
 func helloProgram() []byte {
 	return []byte{
 		cpu.LXI(cpu.PairDE), 0x0D, 0x01,
@@ -53,5 +80,14 @@ func helloProgram() []byte {
 		cpu.MVI(cpu.RegC), bdos.FunctionTerminate,
 		cpu.CALL(), byte(cpm.BDOSVector), byte(cpm.BDOSVector >> 8),
 		'H', 'I', '$',
+	}
+}
+
+func echoInputProgram() []byte {
+	return []byte{
+		cpu.MVI(cpu.RegC), bdos.FunctionConsoleInput,
+		cpu.CALL(), byte(cpm.BDOSVector), byte(cpm.BDOSVector >> 8),
+		cpu.MVI(cpu.RegC), bdos.FunctionTerminate,
+		cpu.CALL(), byte(cpm.BDOSVector), byte(cpm.BDOSVector >> 8),
 	}
 }

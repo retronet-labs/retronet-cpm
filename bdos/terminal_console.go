@@ -27,9 +27,13 @@ func NewTerminalConsole(term *rt.Terminal, input io.Reader, mirror io.Writer) *T
 	if mirror == nil {
 		mirror = io.Discard
 	}
+	reader, ok := input.(*bufio.Reader)
+	if !ok {
+		reader = bufio.NewReader(input)
+	}
 	return &TerminalConsole{
 		terminal: term,
-		reader:   bufio.NewReader(input),
+		reader:   reader,
 		mirror:   mirror,
 	}
 }

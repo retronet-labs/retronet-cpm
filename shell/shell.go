@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/retronet-labs/retronet-8080/cpu"
+	"github.com/retronet-labs/retronet-cpm/bdos"
 	"github.com/retronet-labs/retronet-cpm/cpm"
 	"github.com/retronet-labs/retronet-cpm/disk"
 )
@@ -27,7 +28,7 @@ type Shell struct {
 	drive     disk.Drive
 	reader    *bufio.Reader
 	output    io.Writer
-	console   *console
+	console   *bdos.TerminalConsole
 	alu       cpu.ALUBackend
 	stepLimit uint64
 	trace     cpm.TraceSink
@@ -58,7 +59,7 @@ func New(config Config) (*Shell, error) {
 		drive:     config.Drive,
 		reader:    reader,
 		output:    output,
-		console:   &console{reader: reader, writer: output},
+		console:   bdos.NewTerminalConsole(nil, reader, output),
 		alu:       alu,
 		stepLimit: stepLimit,
 		trace:     config.Trace,
@@ -174,22 +175,4 @@ func defaultCOMName(name string) string {
 		return name
 	}
 	return name + ".COM"
-}
-
-type console struct {
-	reader *bufio.Reader
-	writer io.Writer
-}
-
-func (c *console) ReadByte() (byte, error) {
-	return c.reader.ReadByte()
-}
-
-func (c *console) WriteByte(value byte) error {
-	_, err := c.writer.Write([]byte{value})
-	return err
-}
-
-func (c *console) Status() bool {
-	return c.reader.Buffered() > 0
 }
