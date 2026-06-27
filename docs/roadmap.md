@@ -28,6 +28,12 @@
 - command tail e FCB default sintetici
 - demo ripetibile locale
 
+## v0.4.1
+
+- terminale condiviso anche nella shell `RUN`
+- conformance estesa a terminale, tail, FCB e BDOS write
+- documentazione didattica di compatibilita' CP/M-like
+
 ## Dopo v0.4
 
 - immagini disco solo con provenienza e licenza chiare

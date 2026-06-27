@@ -22,7 +22,11 @@ PASS bdos-console-output ...
 PASS bdos-direct-console-input ...
 PASS warm-boot ...
 PASS unsupported-bdos ...
-conformance passed=5 failed=0
+PASS terminal-console-output ...
+PASS command-tail-default-fcbs ...
+PASS bdos-write-readonly-fails ...
+PASS bdos-write-mutable-drive ...
+conformance passed=9 failed=0
 ```
 
 ## Avviare La Shell A>
@@ -74,6 +78,18 @@ A>RUN TYPE DOLLAR.TXT
 
 La macchina scrive la command tail a `0080h` e prepara gli FCB default a `005Ch`
 e `006Ch` dai primi due argomenti 8.3.
+
+## Capire Il Terminale Condiviso
+
+I programmi `.COM` scrivono tramite BDOS console, ma l'output passa anche da
+`retronet-terminal`. Oggi lo vedi ancora come normale stdout; domani lo stesso
+buffer potra' alimentare websocket e UI.
+
+```powershell
+go run ./cmd/retronet-cpm -run HELLO.COM
+```
+
+Per i dettagli didattici vedi [Terminale condiviso](terminale.md).
 
 ## Scegliere L'ALU
 

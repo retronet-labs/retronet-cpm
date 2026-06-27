@@ -1,6 +1,7 @@
 # Shell A>
 
-La shell e' un front-end minimo per il drive `A:`:
+La shell e' un front-end minimo per il drive `A:`. I programmi avviati con
+`RUN` usano la console condivisa basata su `retronet-terminal`.
 
 - `DIR`: elenca i file host rappresentabili come nomi CP/M 8.3.
 - `TYPE <file>`: stampa un file testuale dal drive.

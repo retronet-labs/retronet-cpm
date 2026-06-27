@@ -27,6 +27,8 @@ al resto dell'ecosistema RetroNet.
 - FCB default: `005Ch` e `006Ch` dai primi due argomenti 8.3 della shell.
 - Drive `A:`: directory host read-only con nomi CP/M 8.3.
 - Shell `A>`: `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
+- Terminale: programmi `.COM` e shell `RUN` usano `retronet-terminal` come
+  console condivisa.
 - Trace: testuale con `-trace`, JSON Lines con `-trace-json`.
 
 ## BDOS Supportato
@@ -75,6 +77,7 @@ La suite locale copre:
 - command tail e FCB default sintetici
 - CLI e `RETRONET_CPM_ALU`
 - conformance sintetica
+- terminale condiviso, command tail, FCB default e write opt-in
 - test end-to-end locale `retronet-asm -> .COM -> retronet-cpm`
 
 Gate usati:

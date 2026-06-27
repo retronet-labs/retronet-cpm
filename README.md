@@ -20,6 +20,7 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 - Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Console `.COM` adattata a `retronet-terminal` per input/output condivisi con
   futuri websocket.
+- Shell `RUN` con command tail a `0080h` e FCB default `005Ch`/`006Ch`.
 - Documentazione pubblica in italiano.
 
 ## Quick start
@@ -66,12 +67,17 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
   scelta ALU.
 - [BDOS](docs/bdos.md): funzioni console e file read-only supportate.
 - [Shell](docs/shell.md): comandi `A>`.
+- [Terminale condiviso](docs/terminale.md): uso di `retronet-terminal`.
+- [Compatibilita' CP/M-like](docs/compatibilita-cpm.md): implementato,
+  sintetico e fuori scope.
 - [Demo ripetibile](docs/demo.md): transcript locale senza ROM o dischi storici.
 - [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
 - [Release v0.3.0](docs/release-v0.3.0.md): origine `.COM`, BDOS write opt-in
   e libreria assembly didattica.
 - [Release v0.4.0](docs/release-v0.4.0.md): terminale condiviso, `.include`
   negli esempi, command tail/FCB default e demo ripetibile.
+- [Release v0.4.1](docs/release-v0.4.1.md): consolidamento terminale,
+  conformance estesa e documentazione didattica.
 
 ## Limiti attuali
 

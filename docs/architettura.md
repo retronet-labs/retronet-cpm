@@ -38,9 +38,10 @@ usabilita' della shell.
 
 ## Terminale
 
-La CLI usa `retronet-terminal` come adattatore console per i programmi lanciati
-con `-run`: ogni byte BDOS scritto resta visibile su stdout come prima, ma viene
-anche registrato nel buffer raw e nello schermo testuale del terminale condiviso.
+La CLI e la shell usano `retronet-terminal` come adattatore console per i
+programmi `.COM`: ogni byte BDOS scritto resta visibile su stdout come prima, ma
+viene anche registrato nel buffer raw e nello schermo testuale del terminale
+condiviso.
 
 Il terminale non conosce CPU, BDOS o file system CP/M-like. Questo confine e'
 voluto: lo stesso modulo potra' essere riusato da BBS, API websocket e UI senza
