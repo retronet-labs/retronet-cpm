@@ -101,3 +101,64 @@ func TestHostDriveWriteRequiresExplicitWritableDrive(t *testing.T) {
 		t.Fatalf("deleted read err=%v", err)
 	}
 }
+
+func TestHostDriveOptionsLimitFileSizeAndCount(t *testing.T) {
+	root := t.TempDir()
+	drive, err := NewHostDriveWithOptions(root, HostDriveOptions{
+		Writable:    true,
+		MaxFileSize: 4,
+		MaxFiles:    1,
+	})
+	if err != nil {
+		t.Fatalf("NewHostDriveWithOptions: %v", err)
+	}
+	if err := drive.WriteFile("ONE.TXT", []byte("1234")); err != nil {
+		t.Fatalf("WriteFile one: %v", err)
+	}
+	if err := drive.WriteFile("ONE.TXT", []byte("12345")); !errors.Is(err, ErrFileTooLarge) {
+		t.Fatalf("large overwrite err=%v", err)
+	}
+	if err := drive.WriteFile("TWO.TXT", []byte("12")); !errors.Is(err, ErrTooManyFiles) {
+		t.Fatalf("too many files err=%v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "BIG.TXT"), []byte("12345"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := drive.ReadFile("BIG.TXT"); !errors.Is(err, ErrFileTooLarge) {
+		t.Fatalf("large read err=%v", err)
+	}
+}
+
+func TestHostDriveRenameDoesNotOverwrite(t *testing.T) {
+	root := t.TempDir()
+	drive, err := NewHostDriveWithOptions(root, HostDriveOptions{Writable: true})
+	if err != nil {
+		t.Fatalf("drive: %v", err)
+	}
+	if err := drive.WriteFile("ONE.TXT", []byte("1")); err != nil {
+		t.Fatal(err)
+	}
+	if err := drive.WriteFile("TWO.TXT", []byte("2")); err != nil {
+		t.Fatal(err)
+	}
+	if err := drive.RenameFile("ONE.TXT", "TWO.TXT"); !errors.Is(err, os.ErrExist) {
+		t.Fatalf("rename overwrite err=%v", err)
+	}
+}
+
+func TestTemporaryHostDriveCleanup(t *testing.T) {
+	drive, cleanup, err := NewTemporaryHostDrive("retronet-cpm-test-", HostDriveOptions{Writable: true})
+	if err != nil {
+		t.Fatalf("NewTemporaryHostDrive: %v", err)
+	}
+	root := drive.Root()
+	if err := drive.WriteFile("OUT.TXT", []byte("ok")); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	if err := cleanup(); err != nil {
+		t.Fatalf("cleanup: %v", err)
+	}
+	if _, err := os.Stat(root); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("root still exists err=%v", err)
+	}
+}
