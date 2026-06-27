@@ -65,6 +65,8 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 - [BDOS](docs/bdos.md): funzioni console e file read-only supportate.
 - [Shell](docs/shell.md): comandi `A>`.
 - [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
+- [Release v0.3.0](docs/release-v0.3.0.md): origine `.COM`, BDOS write opt-in
+  e libreria assembly didattica.
 
 ## Limiti attuali
 
