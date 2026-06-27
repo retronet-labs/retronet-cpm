@@ -70,6 +70,8 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 - [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
 - [Release v0.3.0](docs/release-v0.3.0.md): origine `.COM`, BDOS write opt-in
   e libreria assembly didattica.
+- [Release v0.4.0](docs/release-v0.4.0.md): terminale condiviso, `.include`
+  negli esempi, command tail/FCB default e demo ripetibile.
 
 ## Limiti attuali
 

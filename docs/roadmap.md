@@ -21,10 +21,14 @@
 - BDOS write opt-in con `-write-disk`
 - libreria assembly didattica `examples/lib/cpm-bdos.asm`
 
-## Dopo v0.3
+## v0.4
 
 - `retronet-terminal` come console condivisa
 - `.include` negli esempi assembly
 - command tail e FCB default sintetici
+- demo ripetibile locale
+
+## Dopo v0.4
+
 - immagini disco solo con provenienza e licenza chiare
 - profili BIOS didattici, non storici inventati
