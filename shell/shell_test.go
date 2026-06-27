@@ -28,7 +28,7 @@ func TestShellCommands(t *testing.T) {
 	var out bytes.Buffer
 	sh, err := New(Config{
 		Drive:  drive,
-		Input:  strings.NewReader("DIR\nTYPE HELLO.TXT\nRUN HI\nEXIT\n"),
+		Input:  strings.NewReader("DIR\nTYPE HELLO.TXT\nRUN HI ARG.TXT\nEXIT\n"),
 		Output: &out,
 	})
 	if err != nil {

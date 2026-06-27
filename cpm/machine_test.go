@@ -2,6 +2,7 @@ package cpm
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/retronet-labs/retronet-8080/cpu"
@@ -88,6 +89,40 @@ func TestProgramTooLarge(t *testing.T) {
 	}
 }
 
+func TestLoadCOMWithCommandInitializesTailAndFCBs(t *testing.T) {
+	m, err := NewMachine(Config{})
+	if err != nil {
+		t.Fatalf("NewMachine: %v", err)
+	}
+	if err := m.LoadCOMWithCommand("ARGS.COM", []byte{cpu.HLT()}, "INPUT.TXT OUT.BIN"); err != nil {
+		t.Fatalf("LoadCOMWithCommand: %v", err)
+	}
+	if got := m.Memory.Read(CommandTailAddr); got != byte(len("INPUT.TXT OUT.BIN")) {
+		t.Fatalf("tail len=%d", got)
+	}
+	for i, value := range []byte("INPUT.TXT OUT.BIN") {
+		if got := m.Memory.Read(CommandTailAddr + 1 + uint16(i)); got != value {
+			t.Fatalf("tail[%d]=0x%02X want 0x%02X", i, got, value)
+		}
+	}
+	if got := m.Memory.Read(CommandTailAddr + 1 + uint16(len("INPUT.TXT OUT.BIN"))); got != '\r' {
+		t.Fatalf("tail terminator=0x%02X", got)
+	}
+	assertFCB(t, m, DefaultFCB1, "INPUT   ", "TXT")
+	assertFCB(t, m, DefaultFCB2, "OUT     ", "BIN")
+}
+
+func TestCommandTailTooLong(t *testing.T) {
+	m, err := NewMachine(Config{})
+	if err != nil {
+		t.Fatalf("NewMachine: %v", err)
+	}
+	err = m.LoadCOMWithCommand("ARGS.COM", []byte{cpu.HLT()}, strings.Repeat("X", MaxCommandTail+1))
+	if !errors.Is(err, ErrCommandTailTooLong) {
+		t.Fatalf("err=%v", err)
+	}
+}
+
 func TestCOMReadsFCBFileThroughBDOS(t *testing.T) {
 	console := bdos.NewMemoryConsole(nil)
 	m, err := NewMachine(Config{
@@ -106,6 +141,20 @@ func TestCOMReadsFCBFileThroughBDOS(t *testing.T) {
 	}
 	if result.Reason != RunStoppedBDOSTerminate || console.Output() != "OK" {
 		t.Fatalf("result=%+v output=%q", result, console.Output())
+	}
+}
+
+func assertFCB(t *testing.T, m *Machine, addr uint16, name string, ext string) {
+	t.Helper()
+	for i := 0; i < 8; i++ {
+		if got := m.Memory.Read(addr + 1 + uint16(i)); got != name[i] {
+			t.Fatalf("fcb name[%d]=0x%02X want 0x%02X", i, got, name[i])
+		}
+	}
+	for i := 0; i < 3; i++ {
+		if got := m.Memory.Read(addr + 9 + uint16(i)); got != ext[i] {
+			t.Fatalf("fcb ext[%d]=0x%02X want 0x%02X", i, got, ext[i])
+		}
 	}
 }
 

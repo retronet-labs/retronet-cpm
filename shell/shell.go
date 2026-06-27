@@ -102,12 +102,12 @@ func (s *Shell) Execute(line string) error {
 		}
 		return s.typ(fields[1])
 	case "RUN":
-		if len(fields) != 2 {
-			return errors.New("usa RUN <programma[.COM]>")
+		if len(fields) < 2 {
+			return errors.New("usa RUN <programma[.COM]> [argomenti]")
 		}
-		return s.runProgram(fields[1])
+		return s.runProgram(fields[1], strings.Join(fields[2:], " "))
 	case "HELP":
-		fmt.Fprintln(s.output, "DIR  TYPE <file>  RUN <programma[.COM]>  HELP  EXIT")
+		fmt.Fprintln(s.output, "DIR  TYPE <file>  RUN <programma[.COM]> [argomenti]  HELP  EXIT")
 	case "EXIT":
 		return ErrExit
 	default:
@@ -142,7 +142,7 @@ func (s *Shell) typ(name string) error {
 	return nil
 }
 
-func (s *Shell) runProgram(name string) error {
+func (s *Shell) runProgram(name string, commandTail string) error {
 	name = defaultCOMName(name)
 	data, err := s.drive.ReadFile(name)
 	if err != nil {
@@ -158,7 +158,7 @@ func (s *Shell) runProgram(name string) error {
 	if err != nil {
 		return err
 	}
-	if err := m.LoadCOM(name, data); err != nil {
+	if err := m.LoadCOMWithCommand(name, data, commandTail); err != nil {
 		return err
 	}
 	result, err := m.Run(s.stepLimit)

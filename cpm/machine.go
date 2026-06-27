@@ -2,7 +2,9 @@
 package cpm
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/retronet-labs/retronet-8080/cpu"
 	"github.com/retronet-labs/retronet-cpm/bdos"
@@ -15,9 +17,14 @@ const (
 	BDOSTrapAddress  uint16 = 0xF000
 	DefaultStack     uint16 = 0xEFFE
 	DefaultStepLimit uint64 = 1_000_000
+	CommandTailAddr  uint16 = 0x0080
+	DefaultFCB1      uint16 = 0x005C
+	DefaultFCB2      uint16 = 0x006C
+	MaxCommandTail   int    = 126
 )
 
 var ErrProgramTooLarge = fmt.Errorf("programma COM troppo grande")
+var ErrCommandTailTooLong = errors.New("command tail CP/M troppo lungo")
 
 // Config contiene le dipendenze della macchina CP/M-like.
 type Config struct {
@@ -148,6 +155,49 @@ func (m *Machine) LoadCOM(name string, data []byte) error {
 	return nil
 }
 
+func (m *Machine) LoadCOMWithCommand(name string, data []byte, commandTail string) error {
+	if err := m.LoadCOM(name, data); err != nil {
+		return err
+	}
+	if err := m.SetCommandTail(commandTail); err != nil {
+		return err
+	}
+	return m.SetDefaultFCBs(commandTail)
+}
+
+func (m *Machine) SetCommandTail(commandTail string) error {
+	if len(commandTail) > MaxCommandTail {
+		return fmt.Errorf("%w: %d byte, max %d", ErrCommandTailTooLong, len(commandTail), MaxCommandTail)
+	}
+	m.Memory.Write(CommandTailAddr, byte(len(commandTail)))
+	for i := 0; i < MaxCommandTail; i++ {
+		value := byte(0)
+		if i < len(commandTail) {
+			value = commandTail[i]
+		}
+		m.Memory.Write(CommandTailAddr+1+uint16(i), value)
+	}
+	m.Memory.Write(CommandTailAddr+1+uint16(len(commandTail)), '\r')
+	return nil
+}
+
+func (m *Machine) SetDefaultFCBs(commandTail string) error {
+	clearFCB(m.Memory, DefaultFCB1)
+	clearFCB(m.Memory, DefaultFCB2)
+	fields := strings.Fields(commandTail)
+	if len(fields) > 0 {
+		if err := writeFCB(m.Memory, DefaultFCB1, fields[0]); err != nil {
+			return err
+		}
+	}
+	if len(fields) > 1 {
+		if err := writeFCB(m.Memory, DefaultFCB2, fields[1]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Machine) Run(limit uint64) (RunResult, error) {
 	if limit == 0 {
 		limit = m.config.StepLimit
@@ -241,4 +291,38 @@ func (m *Machine) finish(result RunResult, reason RunReason) RunResult {
 	result.PC = m.CPU.PC
 	result.SP = m.CPU.SP
 	return result
+}
+
+func clearFCB(mem *cpu.FlatMemory, addr uint16) {
+	mem.Write(addr, 0)
+	for i := 1; i <= 11; i++ {
+		mem.Write(addr+uint16(i), ' ')
+	}
+	for i := 12; i < 16; i++ {
+		mem.Write(addr+uint16(i), 0)
+	}
+}
+
+func writeFCB(mem *cpu.FlatMemory, addr uint16, name string) error {
+	normalized, err := disk.NormalizeName(name)
+	if err != nil {
+		return err
+	}
+	base, ext, _ := strings.Cut(normalized, ".")
+	mem.Write(addr, 0)
+	for i := 0; i < 8; i++ {
+		value := byte(' ')
+		if i < len(base) {
+			value = base[i]
+		}
+		mem.Write(addr+1+uint16(i), value)
+	}
+	for i := 0; i < 3; i++ {
+		value := byte(' ')
+		if i < len(ext) {
+			value = ext[i]
+		}
+		mem.Write(addr+9+uint16(i), value)
+	}
+	return nil
 }
