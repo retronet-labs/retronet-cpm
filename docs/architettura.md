@@ -49,3 +49,15 @@ copie di logica terminale nei singoli emulatori.
 
 Non vengono inclusi terminali storici, ROM, font o descrizioni proprietarie: il
 supporto e' un subset ASCII/ANSI generico e sintetico.
+
+## Sessioni API-ready
+
+Il package `session` compone shell, terminale e drive in un oggetto importabile.
+Il futuro `retronet-api` dovrebbe usare `session.New`, `RunCommand`, `Input`,
+`DrainOutput` e `Snapshot` invece di invocare la CLI.
+
+Questo mantiene separati tre livelli:
+
+- `cpm`: macchina `.COM`, BDOS trap e pagina zero
+- `shell`: comandi `A>` sopra un drive
+- `session`: contratto per API/websocket

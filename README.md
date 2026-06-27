@@ -70,6 +70,11 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 - [Terminale condiviso](docs/terminale.md): uso di `retronet-terminal`.
 - [Compatibilita' CP/M-like](docs/compatibilita-cpm.md): implementato,
   sintetico e fuori scope.
+- [Sessioni programmatiche](docs/sessioni.md): API importabile per futuri
+  websocket.
+- [Sicurezza drive](docs/sicurezza-drive.md): limiti e root temporanee.
+- [Verso retronet-api](docs/verso-retronet-api.md): contratto consigliato per
+  il prossimo repo.
 - [Demo ripetibile](docs/demo.md): transcript locale senza ROM o dischi storici.
 - [Prossimi passi](docs/prossimi-passi.md): piano tecnico dopo v0.2.
 - [Release v0.3.0](docs/release-v0.3.0.md): origine `.COM`, BDOS write opt-in
@@ -78,6 +83,8 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
   negli esempi, command tail/FCB default e demo ripetibile.
 - [Release v0.4.1](docs/release-v0.4.1.md): consolidamento terminale,
   conformance estesa e documentazione didattica.
+- [Release v0.4.2](docs/release-v0.4.2.md): sessioni programmatiche,
+  sicurezza drive e ponte verso `retronet-api`.
 
 ## Limiti attuali
 

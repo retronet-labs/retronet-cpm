@@ -29,6 +29,8 @@ al resto dell'ecosistema RetroNet.
 - Shell `A>`: `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Terminale: programmi `.COM` e shell `RUN` usano `retronet-terminal` come
   console condivisa.
+- Sessioni: package `session` per creare sessioni API-ready senza invocare la
+  CLI.
 - Trace: testuale con `-trace`, JSON Lines con `-trace-json`.
 
 ## BDOS Supportato
@@ -78,6 +80,7 @@ La suite locale copre:
 - CLI e `RETRONET_CPM_ALU`
 - conformance sintetica
 - terminale condiviso, command tail, FCB default e write opt-in
+- sicurezza drive host con limiti configurabili
 - test end-to-end locale `retronet-asm -> .COM -> retronet-cpm`
 
 Gate usati:

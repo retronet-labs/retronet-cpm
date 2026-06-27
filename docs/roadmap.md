@@ -34,7 +34,14 @@
 - conformance estesa a terminale, tail, FCB e BDOS write
 - documentazione didattica di compatibilita' CP/M-like
 
-## Dopo v0.4
+## v0.4.2
+
+- package `session` per uso programmatico API-ready
+- opzioni di sicurezza sul drive host: limiti file, limiti dimensione e drive
+  temporaneo
+- documentazione ponte verso `retronet-api`
+
+## Dopo v0.4.2
 
 - immagini disco solo con provenienza e licenza chiare
 - profili BIOS didattici, non storici inventati
