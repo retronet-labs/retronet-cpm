@@ -41,7 +41,15 @@
   temporaneo
 - documentazione ponte verso `retronet-api`
 
-## Dopo v0.4.2
+## v0.5.0
+
+- comando `retronet-cpm-live`
+- shell `A>` locale sopra `retronet-terminal/live`
+- modalita' scriptata per test e CI
+- CR/LF esplicito negli output della shell per schermi terminale
+
+## Dopo v0.5.0
 
 - immagini disco solo con provenienza e licenza chiare
 - profili BIOS didattici, non storici inventati
+- run loop asincrono per programmi `.COM` che leggono input durante l'esecuzione

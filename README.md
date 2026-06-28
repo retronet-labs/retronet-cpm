@@ -20,6 +20,8 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 - Shell `A>` con `DIR`, `TYPE`, `RUN`, `HELP`, `EXIT`.
 - Console `.COM` adattata a `retronet-terminal` per input/output condivisi con
   futuri websocket.
+- Terminale live locale tramite `cmd/retronet-cpm-live`, basato sul package
+  `retronet-terminal/live`.
 - Shell `RUN` con command tail a `0080h` e FCB default `005Ch`/`006Ch`.
 - Documentazione pubblica in italiano.
 
@@ -29,6 +31,7 @@ trap `CALL 0005h`, shell `A>` e un drive `A:` mappato a una directory host.
 go test ./...
 go run ./cmd/retronet-cpm -conformance
 go run ./cmd/retronet-cpm -disk .
+go run ./cmd/retronet-cpm-live -disk .
 go run ./cmd/retronet-cpm -run HELLO.COM
 ```
 
@@ -53,6 +56,17 @@ A>EXIT
 - `-write-disk`: abilita le funzioni BDOS mutanti sulla directory host.
 - `-conformance`: suite sintetica integrata.
 
+Terminale live:
+
+```powershell
+go run ./cmd/retronet-cpm-live -disk .
+go run ./cmd/retronet-cpm-live -disk . -width 100 -height 30
+go run ./cmd/retronet-cpm-live -disk . -script "DIR`rHELP`rEXIT`r"
+```
+
+Nel live: scrivi comandi `A>`, premi Invio per eseguirli, usa Backspace per
+cancellare, `Ctrl+L` per pulire e `Ctrl+Q`/`Ctrl+C` per uscire.
+
 `RETRONET_CPM_ALU` puo' impostare il default della CLI. `RETRONET_8080_ALU`
 resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 8080, non al runtime CP/M-like.
@@ -68,6 +82,7 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
 - [BDOS](docs/bdos.md): funzioni console e file read-only supportate.
 - [Shell](docs/shell.md): comandi `A>`.
 - [Terminale condiviso](docs/terminale.md): uso di `retronet-terminal`.
+- [Terminale live](docs/live.md): shell `A>` interattiva locale.
 - [Compatibilita' CP/M-like](docs/compatibilita-cpm.md): implementato,
   sintetico e fuori scope.
 - [Sessioni programmatiche](docs/sessioni.md): API importabile per futuri
@@ -85,6 +100,7 @@ resta intenzionalmente fuori da questo repo: serve alle diagnostiche del core
   conformance estesa e documentazione didattica.
 - [Release v0.4.2](docs/release-v0.4.2.md): sessioni programmatiche,
   sicurezza drive e ponte verso `retronet-api`.
+- [Release v0.5.0](docs/release-v0.5.0.md): terminale live CP/M-like.
 
 ## Limiti attuali
 

@@ -26,6 +26,16 @@ Internamente, pero', ogni byte scritto dal BDOS passa anche dal terminale
 condiviso. Questo permette al futuro `retronet-api` di usare lo stesso output
 per websocket o UI browser.
 
+Da v0.5.0 esiste anche un terminale locale interattivo:
+
+```powershell
+go run ./cmd/retronet-cpm-live -disk C:\tmp\cpm
+```
+
+Questo comando usa il package `retronet-terminal/live`: raw mode, rendering
+dello snapshot e output a delta vivono nel repo terminale, mentre `retronet-cpm`
+fornisce solo l'handler che traduce i tasti in comandi della sessione CP/M-like.
+
 ## Shell E Programmi Interattivi
 
 La shell `A>` e i programmi lanciati con `RUN` condividono lo stesso reader. Se
@@ -54,5 +64,8 @@ Questi concetti ora vivono in `retronet-terminal`, non in `retronet-cpm`.
 - Non e' un VT100 completo.
 - Non include font, ROM o terminfo.
 - Non interpreta programmi CP/M storici arbitrari.
+- Il terminale live v0.5.0 esegue comandi shell in modo sincrono; i programmi
+  `.COM` che chiedono input mentre sono in esecuzione richiedono il futuro run
+  loop asincrono.
 - Le sequenze ANSI supportate sono quelle documentate nel repo
   `retronet-terminal`.

@@ -47,6 +47,11 @@ Il terminale non conosce CPU, BDOS o file system CP/M-like. Questo confine e'
 voluto: lo stesso modulo potra' essere riusato da BBS, API websocket e UI senza
 copie di logica terminale nei singoli emulatori.
 
+`cmd/retronet-cpm-live` usa il package `retronet-terminal/live` come adattatore
+host. Il runner live gestisce raw mode, snapshot e output a delta; il comando
+CP/M fornisce solo un handler che accumula la riga corrente, chiama
+`session.RunCommand` su Invio e ristampa `A>`.
+
 Non vengono inclusi terminali storici, ROM, font o descrizioni proprietarie: il
 supporto e' un subset ASCII/ANSI generico e sintetico.
 
@@ -61,3 +66,4 @@ Questo mantiene separati tre livelli:
 - `cpm`: macchina `.COM`, BDOS trap e pagina zero
 - `shell`: comandi `A>` sopra un drive
 - `session`: contratto per API/websocket
+- `cmd/retronet-cpm-live`: adattatore locale sopra `session`

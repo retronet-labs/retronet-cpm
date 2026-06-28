@@ -31,6 +31,8 @@ al resto dell'ecosistema RetroNet.
   console condivisa.
 - Sessioni: package `session` per creare sessioni API-ready senza invocare la
   CLI.
+- Live: `cmd/retronet-cpm-live` collega `session` a `retronet-terminal/live` per
+  una shell `A>` locale interattiva.
 - Trace: testuale con `-trace`, JSON Lines con `-trace-json`.
 
 ## BDOS Supportato

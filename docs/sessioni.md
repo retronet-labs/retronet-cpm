@@ -69,6 +69,19 @@ host o reader arbitrari al client.
 Un websocket puo' inviare `DrainOutput()` come evento incrementale e usare
 `Snapshot()` per riallineare il browser dopo riconnessioni o perdita eventi.
 
+## Uso Dal Terminale Live
+
+`cmd/retronet-cpm-live` e' un esempio concreto di adapter sopra `session`: crea
+una sessione, stampa `A>`, accumula i tasti dell'utente in una riga e chiama
+`RunCommand` quando arriva Invio.
+
+```powershell
+go run ./cmd/retronet-cpm-live -disk C:\tmp\cpm
+```
+
+La stessa struttura verra' riusata da `retronet-api`, sostituendo raw mode e
+stdout con websocket.
+
 ## Limiti
 
 `session` non apre socket, non gestisce autenticazione e non crea policy multi
