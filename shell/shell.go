@@ -94,7 +94,7 @@ func (s *Shell) Run() error {
 			if errors.Is(err, ErrExit) {
 				return nil
 			}
-			fmt.Fprintf(s.output, "? %v\n", err)
+			fmt.Fprintf(s.output, "? %v\r\n", err)
 		}
 		if errors.Is(err, io.EOF) {
 			return nil
@@ -122,7 +122,7 @@ func (s *Shell) Execute(line string) error {
 		}
 		return s.runProgram(fields[1], strings.Join(fields[2:], " "))
 	case "HELP":
-		fmt.Fprintln(s.output, "DIR  TYPE <file>  RUN <programma[.COM]> [argomenti]  HELP  EXIT")
+		fmt.Fprint(s.output, "DIR  TYPE <file>  RUN <programma[.COM]> [argomenti]  HELP  EXIT\r\n")
 	case "EXIT":
 		return ErrExit
 	default:
@@ -137,7 +137,7 @@ func (s *Shell) dir() error {
 		return err
 	}
 	for _, entry := range entries {
-		fmt.Fprintf(s.output, "%-12s %6d\n", entry.Name, entry.Size)
+		fmt.Fprintf(s.output, "%-12s %6d\r\n", entry.Name, entry.Size)
 	}
 	return nil
 }
@@ -152,7 +152,7 @@ func (s *Shell) typ(name string) error {
 		return err
 	}
 	if len(data) > 0 && data[len(data)-1] != '\n' {
-		fmt.Fprintln(s.output)
+		fmt.Fprint(s.output, "\r\n")
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func (s *Shell) runProgram(name string, commandTail string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(s.output, "\n[%s steps=%d bdos=%d]\n", result.Reason, result.Steps, result.BDOSCalls)
+	fmt.Fprintf(s.output, "\r\n[%s steps=%d bdos=%d]\r\n", result.Reason, result.Steps, result.BDOSCalls)
 	return nil
 }
 
