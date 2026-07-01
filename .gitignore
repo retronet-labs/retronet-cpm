@@ -1,3 +1,7 @@
+# Workspace di sviluppo locale (punta ai checkout sibling), non versionato.
+go.work
+go.work.sum
+
 .gocache/
 *.com
 *.COM
